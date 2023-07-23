@@ -95,6 +95,16 @@ public static class ProductRepository
 public class ApplicationDbContext: DbContext {
     public DbSet<Product> Products { get; set; } = null!;
 
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Product>()
+            .Property(p => p.Description).HasMaxLength(500).IsRequired(false);
+        modelBuilder.Entity<Product>()
+            .Property(p => p.Name).HasMaxLength(40).IsRequired(false);
+        modelBuilder.Entity<Product>()
+            .Property(p => p.Code).HasMaxLength(20).IsRequired(false);
+    }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         => optionsBuilder.UseSqlServer("Server=localhost,1433;Database=Products;User ID=sa;Password=1q2w3e4r@#$");
 }
