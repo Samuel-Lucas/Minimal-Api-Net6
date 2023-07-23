@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddDbContext<ApplicationDbContext>();
 
 var app = builder.Build();
 var configuration = app.Configuration;
@@ -86,4 +88,11 @@ public static class ProductRepository
     {
         Products.Remove(product);
     }
+}
+
+public class ApplicationDbContext: DbContext {
+    public DbSet<Product> Products { get; set; } = null!;
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        => optionsBuilder.UseSqlServer("Server=localhost,1433;Database=Products;User ID=sa;Password=1q2w3e4r@#$");
 }
