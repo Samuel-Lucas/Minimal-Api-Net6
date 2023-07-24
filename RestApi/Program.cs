@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddSqlServer<ApplicationDbContext>(builder.Configuration["ConnectionStrings:SqlServer"]);
@@ -11,8 +12,8 @@ ProductRepository.Init(configuration);
 // app.UseAuthorization();
 // app.MapControllers();
 
-app.MapGet("/products", () => {
-    var products = ProductRepository.GetAll();
+app.MapGet("/products", (ApplicationDbContext context) => {
+    var products = context.Products.ToList();
 
     if (products == null)
         return Results.NotFound();
@@ -20,8 +21,12 @@ app.MapGet("/products", () => {
     return Results.Ok(products);
 });
 
-app.MapGet("/products/{code}", ([FromRoute] string code) => {
-    var product = ProductRepository.GetBy(code);
+app.MapGet("/products/{id}", ([FromRoute] int id, ApplicationDbContext context) => 
+{
+    var product = context.Products.Where(p => p.Id == id)
+        .Include(p => p.Category)
+        .Include(p => p.Tags)
+        .FirstOrDefault();
 
     if (product == null)
         return Results.NotFound();
@@ -39,6 +44,15 @@ app.MapPost("/products", (ProductRequest productRequest, ApplicationDbContext co
         Description = productRequest.Description,
         Category = category
     };
+
+    if (productRequest.Tags != null)
+    {
+        product.Tags = new List<Tag>();
+        foreach (var item in productRequest.Tags)
+        {
+            product.Tags.Add(new Tag{ Name = item});
+        }
+    }
 
     context.Products.Add(product);
     context.SaveChanges();
