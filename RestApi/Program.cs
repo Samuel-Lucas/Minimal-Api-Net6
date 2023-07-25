@@ -85,11 +85,16 @@ app.MapPut("/products/{id}", ([FromRoute] int id, ProductRequest productRequest,
     return Results.NoContent();
 });
 
-app.MapDelete("/products/{code}", (string code) =>
+app.MapDelete("/products/{id}", ([FromRoute] int id,  ApplicationDbContext context) =>
 {
-    var productSaved = ProductRepository.GetBy(code);
-    ProductRepository.Delete(productSaved);
+    var product = context.Products.Where(p => p.Id == id).FirstOrDefault();
+
+    if (product == null)
+        return Results.NotFound();
     
+    context.Products.Remove(product);
+    context.SaveChanges();
+
     return Results.Ok();
 });
 
