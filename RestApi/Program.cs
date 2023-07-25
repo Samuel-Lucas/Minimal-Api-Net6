@@ -59,10 +59,29 @@ app.MapPost("/products", (ProductRequest productRequest, ApplicationDbContext co
     return Results.Created($"/products/{product.Id}", product.Id);
 });
 
-app.MapPut("/products", (Product product) =>
+app.MapPut("/products/{id}", ([FromRoute] int id, ProductRequest productRequest, ApplicationDbContext context) =>
 {
-    var productSaved = ProductRepository.GetBy(product.Code);
-    productSaved.Name = product.Name;
+    var product = context.Products.Where(p => p.Id == id)
+        .Include(p => p.Tags)
+        .FirstOrDefault();
+    
+    var category = context.Category.Where(c => c.Id == productRequest.CategoryId).FirstOrDefault();
+
+    product!.Code = productRequest.Code;
+    product!.Name = productRequest.Name;
+    product!.Description = productRequest.Description;
+    product!.Category = category!;
+
+    if (productRequest.Tags != null)
+    {
+        product.Tags = new List<Tag>();
+        foreach (var item in productRequest.Tags)
+        {
+            product.Tags.Add(new Tag{ Name = item });
+        }
+    }
+
+    context.SaveChanges();
     return Results.NoContent();
 });
 
